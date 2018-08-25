@@ -22,15 +22,17 @@ public final class SyncEngine {
     private var notificationToken: NotificationToken?
 
     /// Indicates the private database in default container
-    private let privateDatabase = CKContainer.default().privateCloudDatabase
+    private var database:CKDatabase!
     
     private let errorHandler = ErrorHandler()
     
     private let syncObjects: [Syncable]
     
     /// We recommend processing the initialization when app launches
-    public init(objects: [Syncable]) {
+    public init(objects: [Syncable], database:CKDatabase) {
         self.syncObjects = objects
+        self.database = database
+        
         for syncObject in syncObjects {
             syncObject.pipeToEngine = { [weak self] recordsToStore, recordIDsToDelete in
                 guard let `self` = self else { return }
@@ -98,7 +100,7 @@ public final class SyncEngine {
             }
         }
 
-        privateDatabase.add(modifyOp)
+        database.add(modifyOp)
     }
 
     @objc func cleanUp() {
@@ -186,7 +188,7 @@ extension SyncEngine {
                 return
             }
         }
-        privateDatabase.add(changesOperation)
+        database.add(changesOperation)
     }
 
     private var zoneIds: [CKRecordZoneID] {
@@ -254,7 +256,7 @@ extension SyncEngine {
             }
         }
 
-        privateDatabase.add(changesOp)
+        database.add(changesOp)
     }
 
     fileprivate func createDatabaseSubscription() {
@@ -273,7 +275,7 @@ extension SyncEngine {
             self.subscriptionIsLocallyCached = true
         }
         createOp.qualityOfService = .utility
-        privateDatabase.add(createOp)
+        database.add(createOp)
     }
 
     fileprivate func startObservingRemoteChanges() {
@@ -370,7 +372,7 @@ extension SyncEngine {
             }
         }
         
-        privateDatabase.add(modifyOpe)
+        database.add(modifyOpe)
     }
     
     // Manually sync data with CloudKit
